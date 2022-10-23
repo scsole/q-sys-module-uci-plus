@@ -3,54 +3,60 @@ json = require("rapidjson")
 Module = {}
 
 --------------------------------Layer Groups and Controllers-----------------------------------------------
-Layer = {}
+Module.Layer = {}
+Module.Layer.__index = Module.Layer
+
 
 -- create a layer object
 -- name is the UCI layer name
 -- stateFunction is a function which should return a boolean value, which a LayerController will run to update the visibility.
 -- transition is the desired trainsition if not 'none'
-function Layer:New(name, stateFunction, transition)
-    local o = {}
-    setmetatable(o, self)
-    self.__index = self
+function Module.Layer.New(name, stateFunction, transition)
+    local self = {}
 
-    o.Name = name
-    o.State = stateFunction or function()
+    self.Name = name
+    self.State = stateFunction or function()
             return true
         end
-    o.Transition = transition or "none"
-    return o
+    self.Transition = transition or "none"
+    
+    setmetatable(self, Module.Layer)
+    return self
 end
 
-LayerController = {}
+Module.LayerController = {}
+Module.LayerController.__index = Module.LayerController
 
 -- add Layer objects to this controller
 
--- runs on a layer object to update its visibility. Set hide to true to override Layer's stateFunction
-function LayerController:Update(layer, hide)
-    local state = layer.State() and not hide
-    if self.Debug then
-        print("LayerControllerUpdate:", layer.Name, state)
+-- runs on a layer object to update its visibility. Set hide to true to override Layer's stateFunction 
+function Module.LayerController:Update(layer, hide)
+    local newState = layer.State() and not hide
+    
+    if newState ~= layer.PreviousState then
+        Uci.SetLayerVisibility(self.Page, layer.Name, newState, layer.Transition)
+        if self.Debug then
+            print("LayerControllerUpdate:", layer.Name, 'New State = '..tostring(newState))
+        end
     end
-    Uci.SetLayerVisibility(self.Page, layer.Name, state, layer.Transition)
+
+    layer.PreviousState = newState
+
 end
 
-function LayerController:UpdateAll(hide)
-    if self.Debug then
-        print("LayerController UpdateAll: hide =", false)
-    end
+function Module.LayerController:UpdateAll(hide)
     for _, layer in pairs(self.List) do
         self:Update(layer, hide)
     end
 end
 
 -- hides all Layers in the Controller
-function LayerController:Hide()
+function Module.LayerController:Hide()
     self:UpdateAll(true)
 end
 
 -- returns the state of another layer and updates it.
-function LayerController:GetState(layername)
+function Module.LayerController:GetState(layername)
     for _, layer in pairs(self.List) do
         if layer.Name == layername then
             self:Update(layer)
@@ -59,15 +65,15 @@ function LayerController:GetState(layername)
     end
 end
 
-function LayerController:Add(layer)
+function Module.LayerController:Add(layer)
     if self.Debug then
-        print("Add:", layer.Name)
+        print("Layer added:", layer.Name)
     end
     table.insert(self.List, layer)
     self:Update(layer)
 end
 
-function LayerController:UpdateOnEvent(control)
+function Module.LayerController:UpdateOnEvent(control)
     local oldEH = control.EventHandler or function()
         end
     control.EventHandler = function(ctrl)
@@ -77,19 +83,18 @@ function LayerController:UpdateOnEvent(control)
 end
 
 -- set .Debug to true if you want to see a print of what is happening.
-function LayerController:New(page, list)
-    local o = {}
-    setmetatable(o, self)
-    self.__index = self
+function Module.LayerController.New(page, list)
+    local self = {}
 
-    o.Page = page or "Page 1"
-    o.List = list or {}
-    o.Debug = false
-    return o
+    self.Page = page or "Page 1"
+    self.List = list or {}
+    self.Debug = false
+    setmetatable(self, Module.LayerController)
+
+    return self
 end
 
 ----------------------------------------------------------------------------------------
-Module = {Layer = Layer, LayerController = LayerController}
 
 -- Load UCI Information / UCI Names
 function Module.GetLayout(UCIName) -- Load UCI information into table to parse below
@@ -105,9 +110,9 @@ function Module.GetLayout(UCIName) -- Load UCI information into table to parse b
     end
 end
 ---------------------------------------------------------------
-
+ -- add standard Uci library to this library
 for key, fun in pairs(Uci) do
     Module[key] = fun
-end -- add standard Uci library to this library
+end
 
 return Module
