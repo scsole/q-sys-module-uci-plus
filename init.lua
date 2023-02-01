@@ -1,16 +1,17 @@
-json = require("rapidjson")
+local json = require("rapidjson")
 
-Module = {}
+local Module = {}
 
 --------------------------------Layer Groups and Controllers-----------------------------------------------
 Module.Layer = {}
 Module.Layer.__index = Module.Layer
 
 
--- create a layer object
--- name is the UCI layer name
--- stateFunction is a function which should return a boolean value, which a LayerController will run to update the visibility.
--- transition is the desired trainsition if not 'none'
+--- Create a layer object.
+-- name is the UCI layer name.
+-- stateFunction is a function which should return a boolean value, which a LayerController will run to update the
+-- visibility.
+-- transition is the desired transition if not 'none'
 function Module.Layer.New(name, stateFunction, transition)
   local self = {}
 
