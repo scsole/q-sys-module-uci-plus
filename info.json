@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "LuaModule",
-  "author": "james.martin@qsc.com",
+  "author": "james.martin@qsc.com, sebastian.sole@strawberrysound.co.nz",
   "description": "Get UCI structure as a table, and control Layers in a scalable way with higher order functions.\nAlso includes the standard Uci function for completeness.",
   "requiredVersion": "9.5"
 }
