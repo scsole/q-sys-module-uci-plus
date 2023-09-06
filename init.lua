@@ -42,7 +42,6 @@ function Module.LayerController:Update(layer, hide)
   end
 
   layer.PreviousState = newState
-
 end
 
 function Module.LayerController:UpdateAll(hide)
