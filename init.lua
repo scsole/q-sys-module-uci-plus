@@ -3,15 +3,15 @@ local json = require("rapidjson")
 local Module = {}
 
 --------------------------------Layer Groups and Controllers-----------------------------------------------
+
 Module.Layer = {}
 Module.Layer.__index = Module.Layer
 
-
 --- Create a layer object.
--- name is the UCI layer name.
--- stateFunction is a function which should return a boolean value, which a LayerController will run to update the
--- visibility.
--- transition is the desired transition if not 'none'
+--- @param name string The UCI layer name.
+--- @param stateFunction function Function which returns a boolean value corresponding to the the layer's visibility.
+--- @param transition string? The desired transition if not 'none'.
+--- @return table
 function Module.Layer.New(name, stateFunction, transition)
   local self = {}
 
@@ -28,43 +28,49 @@ end
 Module.LayerController = {}
 Module.LayerController.__index = Module.LayerController
 
--- add Layer objects to this controller
-
--- runs on a layer object to update its visibility. Set hide to true to override Layer's stateFunction
+--- Update a layer's visibility. Optionally set hide to true to override a layer's `stateFunction` and hide the layer.
+--- @param layer table The layer object to update visibility for.
+--- @param hide boolean? Optionally set to true when a layer's stateFunction should be overridden.
 function Module.LayerController:Update(layer, hide)
   local newState = layer.State() and not hide
 
   if newState ~= layer.PreviousState then
     Uci.SetLayerVisibility(self.Page, layer.Name, newState, layer.Transition)
     if self.Debug then
-      print("LayerControllerUpdate:", layer.Name, 'New State = ' .. tostring(newState))
+      print("LayerControllerUpdate:", layer.Name, 'New State = ', tostring(newState))
     end
   end
 
   layer.PreviousState = newState
 end
 
+--- Update the visibility of all layers in the layer controller.
+--- @param hide boolean? Optionally set to true to override all stateFunctions and hide all layers.
 function Module.LayerController:UpdateAll(hide)
   for _, layer in pairs(self.List) do
     self:Update(layer, hide)
   end
 end
 
--- hides all Layers in the Controller
+--- Hide all layers in the Controller.
 function Module.LayerController:Hide()
   self:UpdateAll(true)
 end
 
--- returns the state of another layer and updates it.
-function Module.LayerController:GetState(layername)
+--- Return the state of another layer and update it.
+--- @param layerName string The name of the layer to get stat from.
+--- @return boolean? The state of the layer if it exists, else nil.
+function Module.LayerController:GetState(layerName)
   for _, layer in pairs(self.List) do
-    if layer.Name == layername then
+    if layer.Name == layerName then
       self:Update(layer)
       return layer.State()
     end
   end
 end
 
+--- Add layer objects to this controller.
+--- @param layer table The layer object to add.
 function Module.LayerController:Add(layer)
   if self.Debug then
     print("Layer added:", layer.Name)
@@ -73,6 +79,8 @@ function Module.LayerController:Add(layer)
   self:Update(layer)
 end
 
+--- Modify a controls event handler so that it also triggers the layer controller to update visibilities of all layers.
+--- @param control table A control which should also trigger visibility checks.
 function Module.LayerController:UpdateOnEvent(control)
   local oldEH = control.EventHandler or function()
   end
@@ -82,7 +90,10 @@ function Module.LayerController:UpdateOnEvent(control)
   end
 end
 
--- set .Debug to true if you want to see a print of what is happening.
+--- Create a new layer controller object. Set .Debug to true if you want to see a print of what is happening.
+--- @param page string? The UCI page name that this layer controller should act on. Defaults to "Page 1".
+--- @param list table? An optional list of layer objects.
+--- @return table # A new layer controller object.
 function Module.LayerController.New(page, list)
   local self = {}
 
@@ -96,8 +107,11 @@ end
 
 ----------------------------------------------------------------------------------------
 
--- Load UCI Information / UCI Names
-function Module.GetLayout(UCIName) -- Load UCI information into table to parse below
+--- Load UCI Information / UCI Names.
+---@param UCIName string The UCI name to get the layout for.
+---@return table? # A list of pages contained in the UCI.
+function Module.GetLayout(UCIName)
+  -- Load UCI information into table to parse below
   local thefile = io.open("design/ucis.json")
   local text = thefile:read("a")
   local UCIs = json.decode(text).Ucis
@@ -111,7 +125,8 @@ function Module.GetLayout(UCIName) -- Load UCI information into table to parse b
 end
 
 ---------------------------------------------------------------
--- add standard Uci library to this library
+
+-- Add the standard Uci library interface to this library
 for key, fun in pairs(Uci) do
   Module[key] = fun
 end
