@@ -10,7 +10,7 @@ Module.Layer.__index = Module.Layer
 --- Create a layer object.
 --- @param name string The UCI layer name.
 --- @param stateFunction function Function which returns a boolean value corresponding to the the layer's visibility.
---- @param transition string? The desired transition if not 'none'.
+--- @param transition string? The desired transition if not inheriting the controller's default.
 --- @return table
 function Module.Layer.New(name, stateFunction, transition)
   local self = {}
@@ -19,7 +19,7 @@ function Module.Layer.New(name, stateFunction, transition)
   self.State = stateFunction or function()
     return true
   end
-  self.Transition = transition or "none"
+  self.Transition = transition
 
   setmetatable(self, Module.Layer)
   return self
@@ -35,7 +35,7 @@ function Module.LayerController:Update(layer, hide)
   local newState = layer.State() and not hide
 
   if newState ~= layer.PreviousState then
-    Uci.SetLayerVisibility(self.Page, layer.Name, newState, layer.Transition)
+    Uci.SetLayerVisibility(self.Page, layer.Name, newState, layer.Transition or self.DefaultTransition)
     if self.Debug then
       print("LayerControllerUpdate:", layer.Name, 'New State = ', tostring(newState))
     end
@@ -82,7 +82,7 @@ end
 --- Initialize this controller's layer list using a boolean lookup table. The lookup table's keys must match layer names
 --- while the value must be a boolean type corresponding to the visibility.
 --- @param layerLookup table Table containing key value pairs
---- @param transition string? The desired transition for all layers if not 'none'
+--- @param transition string? The desired transition for all layers if not the controller's default
 function Module.LayerController:InitializeList(layerLookup, transition)
   if self.Debug then
     print("LayerController: Initialize List from lookup table")
@@ -112,13 +112,15 @@ end
 --- Create a new layer controller object. Set .Debug to true if you want to see a print of what is happening.
 --- @param page string? The UCI page name that this layer controller should act on. Defaults to "Page 1".
 --- @param list table? An optional list of layer objects.
+--- @param transition string? An optional default transition to use when layers do not specify a transition.
 --- @return table # A new layer controller object.
-function Module.LayerController.New(page, list)
+function Module.LayerController.New(page, list, transition)
   local self = {}
 
   self.Page = page or "Page 1"
   self.List = list or {}
   self.Debug = false
+  self.DefaultTransition = transition or "none"
   setmetatable(self, Module.LayerController)
 
   return self
