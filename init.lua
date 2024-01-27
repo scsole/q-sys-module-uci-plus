@@ -79,6 +79,25 @@ function Module.LayerController:Add(layer)
   self:Update(layer)
 end
 
+--- Initialize this controller's layer list using a boolean lookup table. The lookup table's keys must match layer names
+--- while the value must be a boolean type corresponding to the visibility.
+--- @param layerLookup table Table containing key value pairs
+--- @param transition string? The desired transition for all layers if not 'none'
+function Module.LayerController:InitializeList(layerLookup, transition)
+  if self.Debug then
+    print("LayerController: Initialize List from lookup table")
+  end
+  self.List = {}
+  for layer, _boolValue in pairs(layerLookup) do
+    self:Add(
+      Module.Layer.New(
+        layer,
+        function() return layerLookup[layer] end,
+        transition
+      ))
+  end
+end
+
 --- Modify a controls event handler so that it also triggers the layer controller to update visibilities of all layers.
 --- @param control table A control which should also trigger visibility checks.
 function Module.LayerController:UpdateOnEvent(control)
