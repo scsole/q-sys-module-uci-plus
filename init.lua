@@ -2,6 +2,16 @@ local json = require("rapidjson")
 
 local Module = {}
 
+-- Valid transition strings
+Module.Transitions = {
+  Left = 'left',
+  Right = 'right',
+  Top = 'top',
+  Bottom = 'bottom',
+  Fade = 'fade',
+  None = 'none'
+}
+
 --------------------------------Layer Groups and Controllers-----------------------------------------------
 
 Module.Layer = {}
@@ -120,7 +130,7 @@ function Module.LayerController.New(page, list, transition)
   self.Page = page or "Page 1"
   self.List = list or {}
   self.Debug = false
-  self.DefaultTransition = transition or "none"
+  self.DefaultTransition = transition or Module.Transitions.None
   setmetatable(self, Module.LayerController)
 
   return self
@@ -143,6 +153,19 @@ function Module.GetLayout(UCIName)
       return UCI.Pages
     end
   end
+end
+
+--- Check if a string represents a valid transition and return it. This will always return a valid transition type. 
+--- @param transition string A transition string to check
+--- @return string # The provided transition type if `transition` was valid, else 'none'
+function Module.ParseTransition(transition)
+  transition = transition:lower()
+  for _, t in pairs(Module.Transitions) do
+    if transition == t then
+      return transition
+    end
+  end
+  return Module.Transitions.None
 end
 
 ---------------------------------------------------------------
