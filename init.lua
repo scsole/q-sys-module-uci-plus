@@ -98,7 +98,7 @@ function Module.LayerController:InitializeList(layerLookup, transition)
     print("LayerController: Initialize List from lookup table")
   end
   self.List = {}
-  for layer, _boolValue in pairs(layerLookup) do
+  for layer, _ in pairs(layerLookup) do
     self:Add(
       Module.Layer.New(
         layer,
@@ -155,7 +155,7 @@ function Module.GetLayout(UCIName)
   end
 end
 
---- Check if a string represents a valid transition and return it. This will always return a valid transition type. 
+--- Check if a string represents a valid transition and return it. This will always return a valid transition type.
 --- @param transition string A transition string to check
 --- @return string # The provided transition type if `transition` was valid, else 'none'
 function Module.ParseTransition(transition)
